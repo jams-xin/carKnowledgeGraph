@@ -26,6 +26,7 @@ public class ExampleController {
     PaperMapper paperMapper;
     @RequestMapping(value = "/searchList",method = RequestMethod.POST)
     public RetResult<List> searchListResponse(@RequestBody Map<String,String> map) {
+        System.out.println("OK");
         System.out.println(map.get("username"));
         List<PaperMysqlBean> list = paperMapper.getData();
         return RetResponse.makeOKRsp(list);
