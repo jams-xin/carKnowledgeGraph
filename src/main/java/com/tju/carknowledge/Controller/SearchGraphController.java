@@ -101,7 +101,6 @@ public class SearchGraphController {
             }
         }
 
-
         allDataInfoList.addAll(wikiMap.get("entity"));
         allDataInfoList.addAll(regulationsMap.get("entity"));
 
