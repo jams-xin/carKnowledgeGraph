@@ -1,17 +1,13 @@
 package com.tju.carknowledge.service;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.tju.carknowledge.Config;
 import com.tju.carknowledge.domain.EsRegulationBean;
 import com.tju.carknowledge.domain.EsStandardBean;
 import com.tju.carknowledge.utils.EsBuilderUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.search.SearchHit;
-
 import java.io.IOException;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @ClassName RegService
@@ -22,14 +18,16 @@ import java.util.regex.Pattern;
  **/
 
 public class RegService {
+
+    private Config config = new Config();
     /**
      * @Description 搜索行业标准框，返回查询的标准行业数据
-     * function StandardInfoSearch()
+     * @param  value String value, int page
      **/
     public List<EsStandardBean> StandardInfoSearch(String value, int page) throws Exception {
         // 获取所有的相关信息
         EsBuilderUtils esBuilderUtils = new EsBuilderUtils();
-        SearchHit[] searchHits = esBuilderUtils.queryTextBuilder("carnorm","norm", "2", value, "None", page); // uuid 默认为空
+        SearchHit[] searchHits = esBuilderUtils.queryTextBuilder(config.CARNORMINDEX,config.CARNORMTYPE, "2", value, "None", page); // uuid 默认为空
         List<EsStandardBean> allStandardInfoBeans= new ArrayList<>();
 
         for (SearchHit hit : searchHits) {
@@ -50,7 +48,6 @@ public class RegService {
             String scope = String.valueOf(sourceAsMap.get("scope"));
             String reference_file = String.valueOf(sourceAsMap.get("reference_file"));
             String reference_file_pdf = String.valueOf(sourceAsMap.get("reference_file_pdf"));
-            String reference_file_number = String.valueOf(sourceAsMap.get("reference_file_number"));
             String term_definition = String.valueOf(sourceAsMap.get("term_definition"));
 
             // 数据处理
@@ -61,21 +58,6 @@ public class RegService {
             for(Map.Entry<String, String> vo : reference_file_map.entrySet()){
                 reference_file_pdf = vo.getValue();
             }
-
-            //term_definition
-//            Map<String, String> term_definitionInfo1 = new HashMap<String, String>();
-//            String term_definitionInfo = null;
-//            Gson gson1 = new Gson();
-//            Map<String, String> map1 = new HashMap<String, String>();
-//            map1 = gson1.fromJson(term_definition, map1.getClass());
-//            for (Map.Entry<String, String> entry : map1.entrySet()){
-//                // 返回一个术语定义term_definitionInfo
-//                term_definitionInfo1.put(entry.getKey(),entry.getValue());
-//
-//                term_definitionInfo = entry.getValue();
-//                break;
-//            }
-
 
             drafting_unit = drafting_unit.replaceAll("'","")
                     .replaceAll("\"","")
@@ -117,6 +99,7 @@ public class RegService {
             esStandardBean.setReference_file(reference_file);
             esStandardBean.setReference_file_pdf(reference_file_pdf);
             esStandardBean.setTerm_definition(term_definition);
+
             allStandardInfoBeans.add(esStandardBean);
 
         }
@@ -128,7 +111,7 @@ public class RegService {
 
     /**
      * @Description 去重标准行业数据
-     * @function repeatStandardInfo()
+     * @value List<EsStandardBean> allStandardInfoBeans
      **/
     public List<EsStandardBean> repeatStandardInfo(List<EsStandardBean> allStandardInfoBeans) {
         List<EsStandardBean> newStandardInfoList = new ArrayList<>();
@@ -174,7 +157,6 @@ public class RegService {
                 newStandardBean.setReference_file(newreference_file);
                 newStandardBean.setReference_file_pdf(newreference_file_pdf);
                 newStandardBean.setTerm_definition(newterm_definition);
-//                newStandardBean.setRequest(newrequest);
 
                 newStandardInfoList.add(newStandardBean);
             }
@@ -185,7 +167,7 @@ public class RegService {
 
     /**
      * @Description 合并参考标准，获取所有标准数据
-     * @function getAllStandardInfoList()
+     * @value List<EsStandardBean> allStandardInfoList, List<EsStandardBean> standardInfoList
      **/
     public List<EsStandardBean> getAllStandardInfoList(List<EsStandardBean> allStandardInfoList, List<EsStandardBean> standardInfoList){
         //获取参考标准数据
@@ -225,22 +207,13 @@ public class RegService {
                  term_definitionInfo.put("term_definition_value",entry.getValue());
                  term_definitionList.add(term_definitionInfo);
 
-//                 String term_definitionInfo1;
-//                 if (entry.getValue().endsWith("。")){
-//
-//                     term_definitionInfo1 = entry.getKey() + "；" + entry.getValue();
-//                 }else {
-//                     term_definitionInfo1 = entry.getKey() + "；" + entry.getValue() + "。";
-//                 }
-//                 allTerm_definitionInfo = allTerm_definitionInfo + term_definitionInfo1;
-
                  term_definition_num = term_definition_num + 1;
                  if(term_definition_num == 3){
+                     // 限制显示数目
                      break;
                  }
              }
 
-//             System.out.println(allTerm_definitionInfo);
 
             for (EsStandardBean allStandardInfo: allStandardInfoList){
                 //遍历搜索关键词的所有信息——获取参考标准
@@ -254,7 +227,6 @@ public class RegService {
                     referenceList.add(referenceMap);
                 }
             }
-
 
             newStandardInfoBean.setUuid(newuuid);
             newStandardInfoBean.setSubuuid(newsubuuid);
@@ -271,7 +243,6 @@ public class RegService {
 //            newStandardInfoBean.setReference_file(newreference_file);
 //            newStandardInfoBean.setReference_file_pdf(newreference_file_pdf);
             newStandardInfoBean.setReference(referenceList);
-
 //            newStandardInfoBean.setTerm_definition(allTerm_definitionInfo);
             newStandardInfoBean.setTerm_definition_list(term_definitionList);
 
@@ -282,11 +253,12 @@ public class RegService {
 
 
 
+
     /**
      * @Description 搜索图谱框，搜索关键词返回标准图谱
-     * @function graphSearch()
+     * @param value String value
      **/
-    public Map<String, List> graphSearch(String value) throws Exception {
+    public Map<String, List> graphSearch(String value, int graphflag) throws Exception {
         // 获取所有的相关信息
         EsBuilderUtils esBuilderUtils = new EsBuilderUtils();
         SearchHit[] searchHits = esBuilderUtils.queryTextBuilder("carnorm","norm", "2", value, "None", 1); // uuid 默认为空
@@ -325,17 +297,25 @@ public class RegService {
             esRegulationList.add(esRegulationBean);
 
         }
-        List<EsRegulationBean> standardInfoList = getStandard(esRegulationList);
 
+        List<EsRegulationBean> standardInfoList = getStandard(esRegulationList);
         List<EsRegulationBean> referenceInfoList = getReferenceStandard(esRegulationList,standardInfoList);
-        Map<String, List> graphList = getRegGraph(value, standardInfoList, referenceInfoList);
+
+        Map<String, List> graphList = new HashMap<>();
+        if(graphflag == 1){
+            // 第一次搜索
+            graphList = getRegGraph01(value, standardInfoList, referenceInfoList);
+        }else{
+            // 第二次搜索
+            graphList = getRegGraph02(value, standardInfoList, referenceInfoList);
+        }
 
         return graphList;
     }
 
     /**
      * @Description 获取关键字的标准
-     * @function getStandard()
+     * @value List<EsRegulationBean> esRegulationBeans
      **/
     public List<EsRegulationBean> getStandard(List<EsRegulationBean> esRegulationBeans) {
         // 获取相关标准数据
@@ -370,7 +350,7 @@ public class RegService {
 
     /**
      * @Description 获取参考标准
-     * @function getReferenceStandard()
+     * @value List<EsRegulationBean> esRegulationList, List<EsRegulationBean> standardInfoList
      **/
     public List<EsRegulationBean> getReferenceStandard(List<EsRegulationBean> esRegulationList, List<EsRegulationBean> standardInfoList){
         //获取参考标准数据
@@ -406,12 +386,70 @@ public class RegService {
         }
         return referenceInfoList;
     }
+    /**
+     * @Description 获取第一次搜索图谱
+     * @param value String value, List<EsRegulationBean> standardInfoList, List<EsRegulationBean> referenceInfoList
+     **/
+    public Map<String, List> getRegGraph01(String value, List<EsRegulationBean> standardInfoList, List<EsRegulationBean> referenceInfoList) throws IOException {
+        // 获取标准图谱数据
+        List<Map<String, Object>> dataInfoList = new ArrayList<>();
+        List<Map<String, Object>> linkInfoList = new ArrayList<>();
+        Map<String, List> allMap = new HashMap<>();
+
+        // 后期修改数据，从mysql获取
+        List<String> contentList = new ArrayList<>();
+        contentList.add("内容简介");
+        contentList.add("机动车图谱");
+        contentList.add("机动车图谱详细详细介绍，包括多少个节点，多少种关系等等");
+
+        int flag = 0;
+        for(EsRegulationBean standardInfo : standardInfoList){
+            /* 获取关键字的标准*/
+            Map<String ,Object> standard_map = new HashMap<>();   // 获取一条信息
+            String standard_number = standardInfo.getStandard_number();
+            // 实体
+            standard_map.put("id", standard_number.trim());
+            dataInfoList.add(standard_map);
+
+            // 字符串数组转列表eg: "["1","2"]"转["1","2"]
+            ObjectMapper mapper = new ObjectMapper();
+            String reference_file_numberList = referenceInfoList.get(flag).getReference_file_number();
+            List<String> newreference_file_numberList = mapper.readValue(reference_file_numberList, List.class);
+
+            flag = flag + 1;
+            for (String reference_file_number: newreference_file_numberList) {
+                /* 获取关键字的参考标准*/
+                if (reference_file_number == null || reference_file_number == ""){
+                    continue;
+                }else {
+                    Map<String ,Object> reference_map = new HashMap<>();   // 获取一条信息
+                    Map<String ,Object> link_map = new HashMap<>();   // 获取一条信息
+                    reference_map.put("id", reference_file_number.trim());
+
+                    link_map.put("value",flag);
+                    link_map.put("relation","REF");
+                    link_map.put("source",standard_number);
+                    link_map.put("target",reference_file_number.trim());
+
+                    linkInfoList.add(link_map);
+                    dataInfoList.add(reference_map);
+                }
+            }
+            if (flag >= 5){
+                break;
+            }
+        }
+        allMap.put("entity", dataInfoList);
+        allMap.put("link", linkInfoList);
+        allMap.put("content", contentList);
+        return allMap;
+    }
 
     /**
-     * @Description 获取图谱
-     * @function getRegGraph()
+     * @Description 获取第二次搜索图谱
+     * @param value String value, List<EsRegulationBean> standardInfoList, List<EsRegulationBean> referenceInfoList
      **/
-    public Map<String, List> getRegGraph(String value, List<EsRegulationBean> standardInfoList, List<EsRegulationBean> referenceInfoList) throws IOException {
+    public Map<String, List> getRegGraph02(String value, List<EsRegulationBean> standardInfoList, List<EsRegulationBean> referenceInfoList) throws IOException {
         // 获取标准图谱数据
         Map<String, String> valuemap = new HashMap<>();
 //        List<Map<String, String>> graphList = new ArrayList<>();
@@ -444,7 +482,6 @@ public class RegService {
             link_map.put("target",standard_number.trim());
             link_map.put("relation","SN");
             linkInfoList.add(link_map);
-
 
             // 字符串数组转列表eg: "["1","2"]"转["1","2"]
             ObjectMapper mapper = new ObjectMapper();

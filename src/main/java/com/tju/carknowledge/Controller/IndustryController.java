@@ -3,11 +3,8 @@ package com.tju.carknowledge.Controller;
 import com.alibaba.fastjson.JSONObject;
 import com.tju.carknowledge.domain.*;
 import com.tju.carknowledge.service.IndustryService;
-import com.tju.carknowledge.service.PicService;
 import com.tju.carknowledge.service.RegService;
-import com.tju.carknowledge.utils.EsUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +55,6 @@ public class IndustryController {
                 titleInfo = industryService.industryInfo(type, title, page);
             }
         }
-
 
         return RetResponse.makeOKRsp(titleInfo);
     }

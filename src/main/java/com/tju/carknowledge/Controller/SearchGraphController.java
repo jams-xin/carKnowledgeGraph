@@ -10,9 +10,7 @@ import com.tju.carknowledge.utils.Neo4jUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.util.*;
-import java.util.logging.Handler;
 
 /**
  * @ClassName SearchGraphController
@@ -22,7 +20,6 @@ import java.util.logging.Handler;
  * @Version 1.0
  **/
 
-
 @RestController
 @RequestMapping(path = "/paper")
 public class SearchGraphController {
@@ -31,9 +28,48 @@ public class SearchGraphController {
 
     /**
      * @Description 搜索框
-     * 1.0搜索关键词返回合并图谱（百科 + 标准图谱）
+     * 1.0第一次搜索关键词返回标准图谱
      **/
-    @RequestMapping(path = "/search/graph",method = RequestMethod.POST)
+    @RequestMapping(path = "/search/firstgraph",method = RequestMethod.POST)
+    // application/x-www-form-urlencoded
+    public RetResult<Map<String, List>> GraphFirstSearch(UserBean userBean) throws Exception {
+        System.out.println("搜索框 combineGraphFirstSearch is ok");
+        String value = userBean.getValue();
+
+        String title = new String();
+        Map<String, List> regulationsMap;
+        List allDataInfoList = new ArrayList<>();
+        List allLinkInfoList = new ArrayList<>();
+        Map<String, List> allGraphInfo = new HashMap<>();
+
+        List<EsStandardBean> esStandardInfoList = regService.StandardInfoSearch(value, 1);
+        if (esStandardInfoList.isEmpty()){
+            // 判断搜索标准列表是否为空
+            regulationsMap = regService.graphSearch(value, 1);
+        }else{
+            for (EsStandardBean esStandardInfo1 : esStandardInfoList){
+                title = esStandardInfo1.getTitle();
+                break;
+            }
+            if (title.contains(value)){
+                regulationsMap = regService.graphSearch(value, 1);
+
+            }else{
+                regulationsMap = regService.graphSearch(title, 1);
+            }
+        }
+
+        allDataInfoList.addAll(regulationsMap.get("entity"));
+        allLinkInfoList.addAll(regulationsMap.get("link"));
+        allGraphInfo.put("entity", allDataInfoList);
+        allGraphInfo.put("link", allLinkInfoList);
+        System.out.println("combine entityNum is :"+allDataInfoList.size());
+        System.out.println("combine relationNum is :"+allLinkInfoList.size());
+
+        return RetResponse.makeOKRsp(allGraphInfo);
+    }
+
+    @RequestMapping(path = "/search/secondgraph",method = RequestMethod.POST)
     // application/x-www-form-urlencoded
     public RetResult<Map<String, List>> combineGraphSearch(UserBean userBean) throws Exception {
         System.out.println("搜索框 combineGraphSearch is ok");
@@ -50,7 +86,7 @@ public class SearchGraphController {
         if (esStandardInfoList.isEmpty()){
             // 判断搜索标准列表是否为空
             wikiMap = neo4jUtils.wikiGraphSearch(value);
-            regulationsMap = regService.graphSearch(value);
+            regulationsMap = regService.graphSearch(value, 2);
         }else{
             for (EsStandardBean esStandardInfo1 : esStandardInfoList){
                 title = esStandardInfo1.getTitle();
@@ -58,10 +94,10 @@ public class SearchGraphController {
             }
             if (title.contains(value)){
                 wikiMap = neo4jUtils.wikiGraphSearch(value);
-                regulationsMap = regService.graphSearch(value);
+                regulationsMap = regService.graphSearch(value, 2);
             }else{
                 wikiMap = neo4jUtils.wikiGraphSearch(title);
-                regulationsMap = regService.graphSearch(title);
+                regulationsMap = regService.graphSearch(title, 2);
             }
         }
 

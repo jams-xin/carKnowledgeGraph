@@ -16,8 +16,14 @@ import java.util.*;
  * @Version 1.0
  **/
 public class NewsService {
+
     private Config config = new Config();
 
+    /**
+     * @Description 搜索框
+     * @function 搜索关键词返回查询的新闻公告信息
+     * @value String type, String value, int page
+     **/
     public List<Map<String, String>> newsPaperSearch(String type, String value, int page) throws Exception {
         // 获取新闻文章列表(uuid和title)
         EsBuilderUtils esBuilderUtils = new EsBuilderUtils();
@@ -52,7 +58,11 @@ public class NewsService {
         }
         return newsInfoList;
     }
-
+    /**
+     * @Description 搜索框
+     * @function 新闻公告文章详情页
+     * @value String type, String uuid
+     **/
     public List<EsIndustryBean> newsPaperDetailSearch(String type, String uuid) throws Exception {
         //获取新闻通知文章详情页
 
@@ -85,21 +95,22 @@ public class NewsService {
                 absPictureUrl.add(pic_map);
             }
 
-            // picURL需要判断
-            List<String> absPicURList = (List<String>) sourceAsMap.get("absPicURL"); //
-            String absPicURL = null;
-            if ((absPicURList == null)){
-                System.out.println("pic is null");
-            }else{
-                for (String pic : absPicURList) {
-                    if ((pic.endsWith(".jpg") == true) && (pic.split("/")[2].equals(uuid))) {
-                        absPicURL = pic;
-                        break;
-                    } else {
-                        continue;
-                    }
-                }
-            }
+//            // picURL需要判断
+//            List<String> absPicURList = (List<String>) sourceAsMap.get("absPicURL"); //
+//            String absPicURL = null;
+//            if ((absPicURList == null)){
+//                System.out.println("pic is null");
+//            }else{
+//                for (String pic : absPicURList) {
+//                    if ((pic.endsWith(".jpg") == true) && (pic.split("/")[2].equals(uuid))) {
+//                        absPicURL = pic;
+//                        break;
+//                    } else {
+//                        continue;
+//                    }
+//                }
+//            }
+//            esIndustryBean.setPictureUrl(absPicURL); //测试完删除
 
             esIndustryBean.setContent(content);
             esIndustryBean.setHtml(html);
@@ -107,12 +118,9 @@ public class NewsService {
             esIndustryBean.setOrigin(origin);
             esIndustryBean.setOriginAuthor(originAuthor);
             esIndustryBean.setPublishTime(publishTime);
-            esIndustryBean.setPictureUrl(absPicURL); //测试完删除
-
             esIndustryBean.setAbsPictureUrl(absPictureUrl);
 
             esIndustryBeans.add(esIndustryBean);
-
         }
         return esIndustryBeans;
     }
@@ -120,14 +128,14 @@ public class NewsService {
     /**
      * @Description 导航框
      * @function 所有新闻通知
-     * @function allNewsInfo()
+     * @value int page
      **/
     public List<Map<String, String>> allNewsInfo(int page) throws Exception {
         // 获取新闻通知文章列表
         List<Map<String, String>> allNewsInfoList = new ArrayList();
         EsBuilderUtils esBuilderUtils = new EsBuilderUtils();
         // 后期需要更改type值
-        SearchHit[] searchHits = esBuilderUtils.queryTextBuilder("yx_qcarticle","yx_qcarticle", "3", "None", "None", page); // uuid 默认为空
+        SearchHit[] searchHits = esBuilderUtils.queryTextBuilder(config.INDEX, config.TYPE, "3", "None", "None", page); // uuid 默认为空
 
         for (SearchHit hit : searchHits) {
 

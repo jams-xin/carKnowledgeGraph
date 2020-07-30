@@ -2,14 +2,10 @@ package com.tju.carknowledge.Controller;
 
 import com.tju.carknowledge.domain.*;
 import com.tju.carknowledge.service.RegService;
-import com.tju.carknowledge.utils.EsUtils;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -56,8 +52,6 @@ public class RegulationsController {
                 regulationsInfo = regService.StandardInfoSearch(title, page);
             }
         }
-
-
         return RetResponse.makeOKRsp(regulationsInfo);
     }
 
@@ -75,7 +69,7 @@ public class RegulationsController {
         //查询es获取数据
         RegService regService = new RegService();
 //        Map<String, List> regulationsInfo = regService.guidGraph(value);
-        Map<String, List> regulationsInfo = regService.graphSearch(value);
+        Map<String, List> regulationsInfo = regService.graphSearch(value, 2);
         return RetResponse.makeOKRsp(regulationsInfo);
     }
 
@@ -93,7 +87,7 @@ public class RegulationsController {
 
         //查询es获取数据
         RegService regService = new RegService();
-        Map<String, List> regulationsInfo = regService.graphSearch(value);
+        Map<String, List> regulationsInfo = regService.graphSearch(value, 2);
         return RetResponse.makeOKRsp(regulationsInfo);
     }
 }

@@ -18,7 +18,6 @@ public class EsIndustryBean {
     private String origin;
     private String originAuthor;
     private String publishTime;
-    private String pictureUrl;
     private List absPictureUrl;
 
     public String getHtml() {
@@ -37,14 +36,6 @@ public class EsIndustryBean {
         this.absPictureUrl = absPictureUrl;
     }
 
-    public void setPictureUrl(String pictureUrl) {
-        this.pictureUrl = pictureUrl;
-    }
-
-    public String getPictureUrl() {
-
-        return pictureUrl;
-    }
 
     public void setContent(String content) {
         this.content = content;
@@ -96,7 +87,6 @@ public class EsIndustryBean {
                 ", origin='" + origin + '\'' +
                 ", originAuthor='" + originAuthor + '\'' +
                 ", publishTime='" + publishTime + '\'' +
-                ", pictureUrl='" + pictureUrl + '\'' +
                 ", absPictureUrl=" + absPictureUrl +
                 '}';
     }

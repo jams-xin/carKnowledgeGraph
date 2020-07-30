@@ -17,13 +17,14 @@ import java.util.*;
  * @Version 1.0
  **/
 public class IndustryService {
+
+    private Config config = new Config();
+
     /**
      * @Description 搜索框
      * @function 搜索关键词返回查询的产业资讯信息
-     * @function industryInfo()
+     * @value String type, String value, int page
      **/
-    private Config config = new Config();
-
     public List<Map<String, String>> industryInfo(String type, String value, int page) throws Exception {
         // 获取产业资讯文章列表
 
@@ -64,7 +65,7 @@ public class IndustryService {
     /**
      * @Description 搜索框
      * @function 产业资讯文章详情页
-     * @function industryDetailInfo()
+     * @value String type, String uuid
      **/
     public List<EsIndustryBean> industryDetailInfo(String type, String uuid) throws Exception {
         //获取产业资讯文章详情页
@@ -100,30 +101,12 @@ public class IndustryService {
                 absPictureUrl.add(pic_map);
             }
 
-            // picURL需要判断
-            List<String> absPicURList = (List<String>) sourceAsMap.get("absPicURL"); //
-            String absPicURL = null;
-            if ((absPicURList == null)){
-                System.out.println("pic is null");
-            }else{
-                for (String pic : absPicURList) {
-                    if ((pic.endsWith(".jpg") == true) && (pic.split("/")[2].equals(uuid))) {
-                        absPicURL = "/img/" + pic.split("/")[2] + "/" + pic.split("/")[3];
-                        break;
-                    } else {
-                        continue;
-                    }
-                }
-            }
-
             esIndustryBean.setContent(content);
             esIndustryBean.setHtml(html);
             esIndustryBean.setArticleUrl(articleUrl);
             esIndustryBean.setOrigin(origin);
             esIndustryBean.setOriginAuthor(originAuthor);
             esIndustryBean.setPublishTime(publishTime);
-            esIndustryBean.setPictureUrl(absPicURL);   //测试完删除
-
             esIndustryBean.setAbsPictureUrl(absPictureUrl);
 
             esIndustryBeans.add(esIndustryBean);
@@ -131,27 +114,29 @@ public class IndustryService {
         }
         return esIndustryBeans;
     }
+
     /**
      * @Description 导航框
      * @function 所有产业资讯信息
-     * @function allIndustryInfo()
+     * @value int page
      **/
     public List<Map<String, String>> allIndustryInfo(int page) throws Exception {
         // 获取产业资讯文章列表
         List<Map<String, String>> allIndustryInfoList = new ArrayList();
         EsBuilderUtils esBuilderUtils = new EsBuilderUtils();
-        SearchHit[] searchHits = esBuilderUtils.queryTextBuilder("yx_qcarticle","yx_qcarticle", "3", "None", "None", page); // uuid 默认为空
+        SearchHit[] searchHits = esBuilderUtils.queryTextBuilder(config.INDEX, config.TYPE, "3", "None", "None", page); // uuid 默认为空
 
         for (SearchHit hit : searchHits) {
 
             Map<String, Object> sourceAsMap = hit.getSourceAsMap(); // 取成map对象
             Map<String, String> oneinfoMap = new HashMap<>();
-            String uuid = String.valueOf(sourceAsMap.get("articleID"));
-            String title = String.valueOf(sourceAsMap.get("title"));
+
             String origin = String.valueOf(sourceAsMap.get("origin"));
             String articleUrl = String.valueOf(sourceAsMap.get("articleURL"));
             String originAuthor = String.valueOf(sourceAsMap.get("originAuthor"));
             String publishTime = String.valueOf(sourceAsMap.get("pubishTime"));
+            String uuid = String.valueOf(sourceAsMap.get("articleID"));
+            String title = String.valueOf(sourceAsMap.get("title"));
 
             oneinfoMap.put("uuid", uuid);
             oneinfoMap.put("title", title);

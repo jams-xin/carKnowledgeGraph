@@ -1,10 +1,8 @@
 package com.tju.carknowledge.Controller;
 
 import com.tju.carknowledge.domain.*;
-import com.tju.carknowledge.service.IndustryService;
 import com.tju.carknowledge.service.NewsService;
 import com.tju.carknowledge.service.RegService;
-import com.tju.carknowledge.utils.EsUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
