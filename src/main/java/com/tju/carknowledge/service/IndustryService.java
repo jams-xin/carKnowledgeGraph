@@ -20,6 +20,7 @@ public class IndustryService {
 
     private Config config = new Config();
 
+
     /**
      * @Description 搜索框
      * @function 搜索关键词返回查询的产业资讯信息
@@ -62,6 +63,30 @@ public class IndustryService {
 
         return industryInfoList;
     }
+
+    public  List<Map<String, String>> CarIndustryInfo(String type,String value,int page) throws Exception {
+        //
+        RegService regService = new RegService();
+        String title = new String();
+        List<Map<String, String>> titleInfo;
+
+        List<EsStandardBean> esStandardInfoList = regService.StandardInfoSearch(value, page);
+        if (esStandardInfoList.isEmpty()){
+            titleInfo = industryInfo(type, value, page);
+        }else{
+            for (EsStandardBean esStandardInfo1 : esStandardInfoList){
+                title = esStandardInfo1.getTitle();
+                break;
+            }
+            if (title.contains(value)){
+                titleInfo = industryInfo(type, value, page);
+            }else{
+                titleInfo = industryInfo(type, title, page);
+            }
+        }
+        return titleInfo;
+    }
+
     /**
      * @Description 搜索框
      * @function 产业资讯文章详情页

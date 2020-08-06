@@ -50,9 +50,27 @@ public class EsBuilderUtils {
 
         }else if(Searchflag.equals("2")) {
             // 标准图谱查询Es条件
-            sourceBuilder.query(QueryBuilders.multiMatchQuery(value,
-                    "title", "standard_number", "drafting_unit", "drafter",
-                    "scope", "reference_file", "term_definition", "request"));
+            sourceBuilder.query(QueryBuilders.boolQuery()
+                    .should(QueryBuilders.termQuery("title", value))
+                    .should(QueryBuilders.termQuery("term_definition", value))
+                    .should(QueryBuilders.matchQuery("reference_file", value))
+                    .should(QueryBuilders.termQuery("drafting_unit", value))
+                    .should(QueryBuilders.termQuery("scope", value))
+                    .should(QueryBuilders.termQuery("drafter", value)));
+
+
+
+
+//            sourceBuilder.query(QueryBuilders.boolQuery()
+//                    .should(QueryBuilders.wildcardQuery("title", "*"+value+"*"))
+//                    .should(QueryBuilders.wildcardQuery("standard_number", "*"+value+"*"))
+//                    .should(QueryBuilders.wildcardQuery("drafting_unit", "*"+value+"*"))
+//                    .should(QueryBuilders.wildcardQuery("drafter", "*"+value+"*"))
+//                    .should(QueryBuilders.wildcardQuery("scope", "*"+value+"*"))
+//                    .should(QueryBuilders.wildcardQuery("reference_file", "*"+value+"*")));
+//                    .should(QueryBuilders.wildcardQuery("term_definition", "*"+value+"*")));
+
+
             sourceBuilder.from(page - 1);   //起始位置从page - 1开始
             sourceBuilder.size(200);   //每页10个数据
             sourceBuilder.timeout(new TimeValue(60, TimeUnit.SECONDS));
@@ -73,7 +91,7 @@ public class EsBuilderUtils {
         SearchResponse searchResponse = client.search(searchRequest);
         //4.处理搜索命中文档结
         SearchHit[] searchHits = searchResponse.getHits().getHits();
-        System.out.println(searchHits.length);
+//        System.out.println(searchHits.length);
         return searchHits;
     }
 }

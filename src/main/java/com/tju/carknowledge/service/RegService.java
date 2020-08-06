@@ -4,7 +4,9 @@ import com.google.gson.Gson;
 import com.tju.carknowledge.Config;
 import com.tju.carknowledge.domain.EsRegulationBean;
 import com.tju.carknowledge.domain.EsStandardBean;
+import com.tju.carknowledge.domain.UserBean;
 import com.tju.carknowledge.utils.EsBuilderUtils;
+import com.tju.carknowledge.utils.Neo4jUtils;
 import org.elasticsearch.search.SearchHit;
 import java.io.IOException;
 import java.util.*;
@@ -20,6 +22,126 @@ import java.util.*;
 public class RegService {
 
     private Config config = new Config();
+    Neo4jUtils neo4jUtils = new Neo4jUtils();
+
+    public List<EsStandardBean> CarstandardInfoSearchList(String value, int page) throws Exception {
+        /**
+        * @Description RegulationsController1.0
+        **/
+        List<EsStandardBean> regulationsInfo;
+        String title = new String();
+        List<EsStandardBean> esStandardInfoList = StandardInfoSearch(value, page);
+        if (esStandardInfoList.isEmpty()){
+            regulationsInfo = StandardInfoSearch(value, page);
+        }else{
+            for (EsStandardBean esStandardInfo1 : esStandardInfoList){
+                title = esStandardInfo1.getTitle();
+                break;
+            }
+//        str.indexOf("ABC") != -1
+            if (title.contains(value)){
+                regulationsInfo = StandardInfoSearch(value, page);
+            }else{
+                regulationsInfo = StandardInfoSearch(title, page);
+            }
+        }
+        return regulationsInfo;
+    }
+
+    public Map<String, List> CarGraphFirstSearch(String value) throws Exception {
+        /**
+         * @Description SearchGraphController 1.0
+         **/
+        String title = new String();
+        Map<String, List> regulationsMap;
+        List allDataInfoList = new ArrayList<>();
+        List allLinkInfoList = new ArrayList<>();
+        Map<String, List> allGraphInfo = new HashMap<>();
+
+        List<EsStandardBean> esStandardInfoList = StandardInfoSearch(value, 1);
+
+        if (esStandardInfoList.isEmpty()){
+            // 判断搜索标准列表是否为空
+            regulationsMap = graphSearch(value, 1);
+        }else{
+            for (EsStandardBean esStandardInfo1 : esStandardInfoList){
+                title = esStandardInfo1.getTitle();
+                break;
+            }
+            if (title.contains(value)){
+                regulationsMap = graphSearch(value, 1);
+
+            }else{
+                regulationsMap = graphSearch(title, 1);
+            }
+        }
+
+        allDataInfoList.addAll(regulationsMap.get("entity"));
+        allLinkInfoList.addAll(regulationsMap.get("link"));
+
+        //图谱实体去重
+        HashSet h = new HashSet(allDataInfoList);
+        allDataInfoList.clear();
+        allDataInfoList.addAll(h);
+
+        allGraphInfo.put("entity", allDataInfoList);
+        allGraphInfo.put("link", allLinkInfoList);
+        System.out.println("combine entityNum is :" + allDataInfoList.size());
+        System.out.println("combine relationNum is :" + allLinkInfoList.size());
+
+        return allGraphInfo;
+    }
+    public Map<String, List> CarGraphSecondSearch(String value) throws Exception {
+        /**
+         * @Description SearchGraphController 2.0
+         **/
+        String title = new String();
+        Map<String, List> wikiMap;
+        Map<String, List> regulationsMap;
+        Map<String, List> allGraphInfo = new HashMap<>();
+        List allDataInfoList = new ArrayList<>();
+        List allLinkInfoList = new ArrayList<>();
+
+        List<EsStandardBean> esStandardInfoList = StandardInfoSearch(value, 1);
+        if (esStandardInfoList.isEmpty()){
+            // 判断搜索标准列表是否为空
+            wikiMap = neo4jUtils.wikiGraphSearch(value);
+            regulationsMap = graphSearch(value, 2);
+        }else{
+            for (EsStandardBean esStandardInfo1 : esStandardInfoList){
+                title = esStandardInfo1.getTitle();
+                break;
+            }
+            if (title.contains(value)){
+                wikiMap = neo4jUtils.wikiGraphSearch(value);
+                regulationsMap = graphSearch(value, 2);
+            }else{
+                wikiMap = neo4jUtils.wikiGraphSearch(title);
+                regulationsMap = graphSearch(title, 2);
+            }
+        }
+
+        allDataInfoList.addAll(wikiMap.get("entity"));
+        allDataInfoList.addAll(regulationsMap.get("entity"));
+
+        allLinkInfoList.addAll(wikiMap.get("link"));
+        allLinkInfoList.addAll(regulationsMap.get("link"));
+
+        System.out.println("combine entityNum is :"+allDataInfoList.size());
+        System.out.println("combine relationNum is :"+allLinkInfoList.size());
+
+        //图谱实体去重
+        HashSet h = new HashSet(allDataInfoList);
+        allDataInfoList.clear();
+        allDataInfoList.addAll(h);
+
+        allGraphInfo.put("entity", allDataInfoList);
+        allGraphInfo.put("link", allLinkInfoList);
+        return allGraphInfo;
+    }
+
+
+
     /**
      * @Description 搜索行业标准框，返回查询的标准行业数据
      * @param  value String value, int page
@@ -119,11 +241,11 @@ public class RegService {
 
         for (EsStandardBean allStandardInfoBean: allStandardInfoBeans){
             String uuid = allStandardInfoBean.getUuid();
+
             if (flagset.contains(uuid)){
                 continue;
             }else {
                 flagset.add(uuid);
-//                System.out.println("uuid is: " + uuid);
                 String newuuid = allStandardInfoBean.getUuid();
                 String newsubuuid = allStandardInfoBean.getSubuuid();
                 String newtitle = allStandardInfoBean.getTitle();
@@ -139,7 +261,6 @@ public class RegService {
                 String newreference_file = allStandardInfoBean.getReference_file();
                 String newreference_file_pdf = allStandardInfoBean.getReference_file_pdf();
                 String newterm_definition = allStandardInfoBean.getTerm_definition();
-
                 EsStandardBean newStandardBean = new EsStandardBean();
 
                 newStandardBean.setUuid(newuuid);
@@ -220,7 +341,7 @@ public class RegService {
                 String uuid2 = allStandardInfo.getUuid();
                 String subuuid2 = allStandardInfo.getSubuuid();
 
-                if((newuuid.equals(uuid2) == true)&&(newsubuuid.equals(subuuid2) == false)){
+                if((newuuid.equals(uuid2) == true)&&(newuuid.equals(subuuid2) == false)){
                     Map<String, String> referenceMap = new HashMap<>();
                     referenceMap.put("reference_file_name", allStandardInfo.getReference_file());
                     referenceMap.put("reference_file_pdflink", allStandardInfo.getReference_file_pdf());
@@ -263,7 +384,7 @@ public class RegService {
         EsBuilderUtils esBuilderUtils = new EsBuilderUtils();
         SearchHit[] searchHits = esBuilderUtils.queryTextBuilder("carnorm","norm", "2", value, "None", 1); // uuid 默认为空
         List<EsRegulationBean> esRegulationList = new ArrayList<>();
-
+//        System.out.println("searchHits length is： " + searchHits.length);
         for (SearchHit hit : searchHits) {
             //取_source字段值
             Map<String, Object> sourceAsMap = hit.getSourceAsMap();
@@ -334,13 +455,16 @@ public class RegService {
                 String newtitle = esRegulationBean.getTitle();
                 String newstandard_number = esRegulationBean.getStandard_number();
                 String newpdf = esRegulationBean.getPdf();
+                String newreference_file = esRegulationBean.getReference_file();
 
                 EsRegulationBean standardInfoBean = new EsRegulationBean();
+
                 standardInfoBean.setUuid(newuuid);
                 standardInfoBean.setSubuuid(newsubuuid);
                 standardInfoBean.setTitle(newtitle);
                 standardInfoBean.setStandard_number(newstandard_number);
                 standardInfoBean.setPdf(newpdf);
+                standardInfoBean.setReference_file(newreference_file);
 
                 standardInfoList.add(standardInfoBean);
             }
@@ -365,14 +489,13 @@ public class RegService {
             List<String> reference_file_pdf_list = new ArrayList<>();
 
             String uuid = standardInfo.getUuid();
-            String subuuid = standardInfo.getSubuuid();
 
             for (EsRegulationBean esRegulation: esRegulationList){
                 //遍历搜索关键词的所有信息——获取参考标准
                 String uuid2 = esRegulation.getUuid();
                 String subuuid2 = esRegulation.getSubuuid();
 
-                if((uuid.equals(uuid2) == true)&&(subuuid.equals(subuuid2) == false)){
+                if((uuid.equals(uuid2) == true)&&(uuid.equals(subuuid2) == false)){
                     reference_file_list.add('"' + esRegulation.getReference_file() +'"');
                     reference_file_number_list.add('"' + esRegulation.getReference_file_number() + '"');
                     reference_file_pdf_list.add('"' + esRegulation.getReference_file_pdf() + '"');
@@ -402,40 +525,60 @@ public class RegService {
         contentList.add("机动车图谱");
         contentList.add("机动车图谱详细详细介绍，包括多少个节点，多少种关系等等");
 
-        int flag = 0;
+        int standardFlag = 0;
+        Set<String> flagset = new HashSet<>(); // 去重实体
         for(EsRegulationBean standardInfo : standardInfoList){
             /* 获取关键字的标准*/
             Map<String ,Object> standard_map = new HashMap<>();   // 获取一条信息
             String standard_number = standardInfo.getStandard_number();
+            String title = standardInfo.getTitle();
             // 实体
             standard_map.put("id", standard_number.trim());
+            standard_map.put("title", title);
             dataInfoList.add(standard_map);
 
             // 字符串数组转列表eg: "["1","2"]"转["1","2"]
             ObjectMapper mapper = new ObjectMapper();
-            String reference_file_numberList = referenceInfoList.get(flag).getReference_file_number();
+            String reference_file_numberList = referenceInfoList.get(standardFlag).getReference_file_number();
             List<String> newreference_file_numberList = mapper.readValue(reference_file_numberList, List.class);
 
-            flag = flag + 1;
+            String reference_fileList = referenceInfoList.get(standardFlag).getReference_file();
+            List<String> newreference_fileList = mapper.readValue(reference_fileList, List.class);
+
+//            System.out.println("newreference_file_numberList is: " + newreference_file_numberList);
+//            System.out.println("newreference_fileList is: " + newreference_fileList);
+
+            standardFlag = standardFlag + 1;
+            int referenceFlag = 0;
             for (String reference_file_number: newreference_file_numberList) {
                 /* 获取关键字的参考标准*/
+                reference_file_number = reference_file_number.trim();
                 if (reference_file_number == null || reference_file_number == ""){
                     continue;
                 }else {
-                    Map<String ,Object> reference_map = new HashMap<>();   // 获取一条信息
-                    Map<String ,Object> link_map = new HashMap<>();   // 获取一条信息
-                    reference_map.put("id", reference_file_number.trim());
+                    if (flagset.contains(reference_file_number)) {
+                        // 实体重复
+                        System.out.println("repeat is: " + reference_file_number);
+                        continue;
+                    } else {
+                        flagset.add(reference_file_number);
+                        Map<String, Object> reference_map = new HashMap<>();   // 获取一条信息
+                        Map<String, Object> link_map = new HashMap<>();   // 获取一条信息
+                        reference_map.put("id", reference_file_number);
+                        reference_map.put("title", newreference_fileList.get(referenceFlag).trim());
+                        referenceFlag = referenceFlag + 1;
 
-                    link_map.put("value",flag);
-                    link_map.put("relation","REF");
-                    link_map.put("source",standard_number);
-                    link_map.put("target",reference_file_number.trim());
+                        link_map.put("value", standardFlag);
+                        link_map.put("relation", "REF");
+                        link_map.put("source", standard_number);
+                        link_map.put("target", reference_file_number.trim());
 
-                    linkInfoList.add(link_map);
-                    dataInfoList.add(reference_map);
+                        linkInfoList.add(link_map);
+                        dataInfoList.add(reference_map);
+                    }
                 }
             }
-            if (flag >= 5){
+            if (standardFlag >= 5){
                 break;
             }
         }
@@ -452,7 +595,6 @@ public class RegService {
     public Map<String, List> getRegGraph02(String value, List<EsRegulationBean> standardInfoList, List<EsRegulationBean> referenceInfoList) throws IOException {
         // 获取标准图谱数据
         Map<String, String> valuemap = new HashMap<>();
-//        List<Map<String, String>> graphList = new ArrayList<>();
 
         List<Map<String, Object>> dataInfoList = new ArrayList<>();
         List<Map<String, Object>> linkInfoList = new ArrayList<>();
@@ -466,14 +608,18 @@ public class RegService {
 
         Map<String ,Object> value_map = new HashMap<>();   // 获取一条信息
         value_map.put("id", value);
+        value_map.put("title", value);
         dataInfoList.add(value_map);
 
-        int flag = 0;
+        int standardFlag = 0;
+        Set<String> flagset = new HashSet<>(); // 去重实体
         for(EsRegulationBean standardInfo : standardInfoList){
             /* 获取关键字的标准*/
             Map<String ,Object> standard_map = new HashMap<>();   // 获取一条信息
             String standard_number = standardInfo.getStandard_number();
+            String title = standardInfo.getTitle();
             standard_map.put("id", standard_number.trim());
+            standard_map.put("title", title);
             dataInfoList.add(standard_map);
 
             Map<String ,Object> link_map = new HashMap<>();   // 获取一条信息
@@ -485,32 +631,52 @@ public class RegService {
 
             // 字符串数组转列表eg: "["1","2"]"转["1","2"]
             ObjectMapper mapper = new ObjectMapper();
-            String reference_file_numberList = referenceInfoList.get(flag).getReference_file_number();
+            String reference_file_numberList = referenceInfoList.get(standardFlag).getReference_file_number();
             List<String> newreference_file_numberList = mapper.readValue(reference_file_numberList, List.class);
 
-            flag = flag + 1;
+            String reference_fileList = referenceInfoList.get(standardFlag).getReference_file();
+            List<String> newreference_fileList = mapper.readValue(reference_fileList, List.class);
+
+            standardFlag = standardFlag + 1;
+            int referenceFlag = 0;
             for (String reference_file_number: newreference_file_numberList) {
                 /* 获取关键字的参考标准*/
-                if (reference_file_number == null || reference_file_number == ""){
+                reference_file_number = reference_file_number.trim();
+                if (reference_file_number == null || reference_file_number == "") {
                     continue;
-                }else {
-                    Map<String ,Object> data_map = new HashMap<>();   // 获取一条信息
-                    Map<String ,Object> link_map1 = new HashMap<>();   // 获取一条信息
+                } else {
 
-                    data_map.put("id", reference_file_number.trim());
+                    if (flagset.contains(reference_file_number)) {
+                        // 实体重复
+                        System.out.println("repeat is: " + reference_file_number);
+                        continue;
+                    } else {
+                        flagset.add(reference_file_number);
+                        Map<String, Object> data_map = new HashMap<>();   // 获取一条信息
+                        Map<String, Object> link_map1 = new HashMap<>();   // 获取一条信息
 
-                    link_map1.put("value",flag);
-                    link_map1.put("source",standard_number);
-                    link_map1.put("target",reference_file_number.trim());
-                    link_map1.put("relation","REF");
-                    dataInfoList.add(data_map);
-                    linkInfoList.add(link_map1);
+                        data_map.put("id", reference_file_number);
+                        data_map.put("title", newreference_fileList.get(referenceFlag).trim());
+                        referenceFlag = referenceFlag + 1;
+
+                        link_map1.put("value", standardFlag);
+                        link_map1.put("source", standard_number);
+                        link_map1.put("target", reference_file_number.trim());
+                        link_map1.put("relation", "REF");
+                        dataInfoList.add(data_map);
+                        linkInfoList.add(link_map1);
+                    }
                 }
             }
-            if (flag >= 5){
+            if (standardFlag >= 5){
                 break;
             }
         }
+
+        HashSet h = new HashSet(dataInfoList);
+        dataInfoList.clear();
+        dataInfoList.addAll(h);
+
         allMap.put("entity", dataInfoList);
         allMap.put("link", linkInfoList);
         allMap.put("content", contentList);

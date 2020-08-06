@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -20,38 +22,24 @@ import java.util.Map;
 @RestController
 @RequestMapping(path = "/paper")
 public class RegulationsController {
-    /**
-     * @Description 搜索框
-     * 1.0:搜索关键词返回查询的标准行业数据
-     **/
+
+    RegService regService = new RegService();
+
     @RequestMapping(path = "/search/standard",  method = RequestMethod.POST)
     // application/x-www-form-urlencoded
     public RetResult<List<EsStandardBean>> standardInfoSearchList(UserBean userBean) throws Exception {
-        // 获取文章列表
-        System.out.println("搜索框 standardInfoSearchList is ok");
+        /**
+         * @Description 搜索框
+         * 1.0:搜索关键词返回查询的标准行业数据
+         **/
+        Date date = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM HH:mm:ss");
+        System.out.println(formatter.format(date) + " standardInfoSearchList is ok");
         // 获取请求体
         String value = userBean.getValue();
         int page = userBean.getPage();
-        //查询es获取数据
-        RegService regService = new RegService();
-        List<EsStandardBean> regulationsInfo;
-        String title = new String();
 
-        List<EsStandardBean> esStandardInfoList = regService.StandardInfoSearch(value, page);
-        if (esStandardInfoList.isEmpty()){
-            regulationsInfo = regService.StandardInfoSearch(value, page);
-        }else{
-            for (EsStandardBean esStandardInfo1 : esStandardInfoList){
-                title = esStandardInfo1.getTitle();
-                break;
-            }
-//        str.indexOf("ABC") != -1
-            if (title.contains(value)){
-                regulationsInfo = regService.StandardInfoSearch(value, page);
-            }else{
-                regulationsInfo = regService.StandardInfoSearch(title, page);
-            }
-        }
+        List<EsStandardBean> regulationsInfo = regService.CarstandardInfoSearchList(value, page);
         return RetResponse.makeOKRsp(regulationsInfo);
     }
 
@@ -62,13 +50,12 @@ public class RegulationsController {
     @RequestMapping(path = "/regulations",  method = RequestMethod.POST)
     // application/x-www-form-urlencoded
     public RetResult<Map<String, List>> GuidRegulationsGraph() throws Exception {
-        // 获取文章列表
-        System.out.println("导航框 GuidRegulationsGraph is ok");
+        Date date = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM HH:mm:ss");
+        System.out.println(formatter.format(date) + " GuidRegulationsGraph is ok");
         // 获取请求体
         String value = "机动车";
-        //查询es获取数据
-        RegService regService = new RegService();
-//        Map<String, List> regulationsInfo = regService.guidGraph(value);
+
         Map<String, List> regulationsInfo = regService.graphSearch(value, 2);
         return RetResponse.makeOKRsp(regulationsInfo);
     }

@@ -6,6 +6,9 @@ import com.tju.carknowledge.service.IndustryService;
 import com.tju.carknowledge.service.RegService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -20,42 +23,24 @@ import java.util.Map;
 @RestController
 @RequestMapping(path = "/paper")
 public class IndustryController {
-    /**
-     * @Description 搜索框
-     * 1.0:搜索关键词返回查询的产业资讯信息
-     * 2.0:返回文章详情页信息
-     **/
+    IndustryService industryService = new IndustryService();
+
     @RequestMapping(path = "/search/information",  method = RequestMethod.POST)
     // application/x-www-form-urlencoded
     public RetResult<List<Map<String, String>>> IndustryInfoSearchList(UserBean userBean) throws Exception {
-        // 获取文章列表
-        System.out.println("搜索框 IndustryInfoSearchList is ok");
+        /**
+         * @Description 搜索框
+         * 1.0:搜索关键词返回查询的产业资讯信息
+         **/
+        Date date = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM HH:mm:ss");
+        System.out.println(formatter.format(date) + " IndustryInfoSearchList is ok");
         // 获取请求体
         String type = userBean.getType();
         String value = userBean.getValue();
         int page = userBean.getPage();
 
-        IndustryService industryService = new IndustryService();
-        RegService regService = new RegService();
-        String title = new String();
-        List<Map<String, String>> titleInfo;
-
-        List<EsStandardBean> esStandardInfoList = regService.StandardInfoSearch(value, page);
-        if (esStandardInfoList.isEmpty()){
-            titleInfo = industryService.industryInfo(type, value, page);
-        }else{
-            for (EsStandardBean esStandardInfo1 : esStandardInfoList){
-                title = esStandardInfo1.getTitle();
-                break;
-            }
-
-            if (title.contains(value)){
-                titleInfo = industryService.industryInfo(type, value, page);
-            }else{
-                titleInfo = industryService.industryInfo(type, title, page);
-            }
-        }
-
+        List<Map<String, String>> titleInfo = industryService.CarIndustryInfo(type, value, page);
         return RetResponse.makeOKRsp(titleInfo);
     }
 
@@ -63,14 +48,17 @@ public class IndustryController {
     @RequestMapping(path = "/search/information/detail",method = RequestMethod.POST)
     // application/x-www-form-urlencoded类型
     public RetResult<List<EsIndustryBean>> IndustryDetailInfoSearch(UserBean userBean) throws Exception {
-        // 获取详情页
-        System.out.println("搜索框 IndustryDetailInfoSearch is ok");
-
+        /**
+         * @Description 搜索框
+         * 2.0:返回文章详情页信息
+         **/
+        Date date = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM HH:mm:ss");
+        System.out.println(formatter.format(date) + " IndustryDetailInfoSearch is ok");
         // 获取请求体
         String type = userBean.getType();
         String uuid = userBean.getUuid();
 
-        IndustryService industryService = new IndustryService();
         List<EsIndustryBean> paperDetailInfo = industryService.industryDetailInfo(type, uuid);
         return RetResponse.makeOKRsp(paperDetailInfo);
     }
@@ -83,12 +71,12 @@ public class IndustryController {
     @RequestMapping(path = "/information",  method = RequestMethod.POST)
     // application/x-www-form-urlencoded
     public RetResult<List<Map<String, String>>> AllIndustryInfoSearchList(UserBean userBean) throws Exception {
-        // 获取文章列表
-        System.out.println("导航框 AllIndustryInfoSearchList is ok");
+        Date date = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM HH:mm:ss");
+        System.out.println(formatter.format(date) + " AllIndustryInfoSearchList is ok");
         // 获取请求体
         int page = userBean.getPage();
 
-        IndustryService industryService = new IndustryService();
         List<Map<String, String>> titleInfo = industryService.allIndustryInfo(page);
         return RetResponse.makeOKRsp(titleInfo);
     }

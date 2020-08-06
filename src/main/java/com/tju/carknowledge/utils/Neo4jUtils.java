@@ -108,6 +108,7 @@ public class Neo4jUtils {
         for (String entity : entityList){
             Map<String ,Object> data_map = new HashMap<>();   // 获取一条信息
             data_map.put("id", entity);
+            data_map.put("title", entity);
             dataInfoList.add(data_map);
         }
         HashSet h1 = new HashSet(linkInfoList);

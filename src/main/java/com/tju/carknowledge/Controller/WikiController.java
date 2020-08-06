@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static java.awt.SystemColor.info;
@@ -30,10 +31,10 @@ import static java.awt.SystemColor.info;
 @RequestMapping(path = "/paper")
 public class WikiController {
 
+    Neo4jUtils neo4jUtils = new Neo4jUtils();
     public  Config config = new Config();
     @Autowired
     public CarMapper carMapper;
-
     /**
      * @Description 导航框（示例展示）
      * 1.0固定搜索词，返回固定百科图谱数据
@@ -41,21 +42,19 @@ public class WikiController {
     @RequestMapping(path = "/wiki",method = RequestMethod.POST)
     // application/x-www-form-urlencoded
     public RetResult<Map<String, List>> guidWikiGraph() throws Exception {
-        // 展示图谱
+        Date date = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-dd-MM HH:mm:ss");
+        System.out.println(formatter.format(date) + " guidWikiGraph is ok");
+        String value = "发动机";  // 作为展示页面，选取确定数据展示
 
-        System.out.println("导航框 guidWikiGraph is ok");
 //        CarMysqlBean carMysqlBean = carMapper.getDataById("1");
 //        System.out.println(carMysqlBean);
 //        String value = "碳钢";  // 作为展示页面，选取确定数据展示
 //        String value = "手柄座";  // 作为展示页面，选取确定数据展示
-        String value = "发动机";  // 作为展示页面，选取确定数据展示
 
-        Neo4jUtils neo4jUtils = new Neo4jUtils();
         Map<String, List> allMap = neo4jUtils.wikiGraphSearch(value);
         return RetResponse.makeOKRsp(allMap);
     }
-
-
 
 
     /**

@@ -3,6 +3,7 @@ package com.tju.carknowledge.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tju.carknowledge.Config;
 import com.tju.carknowledge.domain.EsIndustryBean;
+import com.tju.carknowledge.domain.EsStandardBean;
 import com.tju.carknowledge.utils.EsBuilderUtils;
 import org.elasticsearch.search.SearchHit;
 
@@ -58,6 +59,29 @@ public class NewsService {
         }
         return newsInfoList;
     }
+    public  List<Map<String, String>> CarNewsPaper(String type,String value,int page) throws Exception {
+        //
+        RegService regService = new RegService();
+        String title = new String();
+        List<Map<String, String>> titleInfo;
+
+        List<EsStandardBean> esStandardInfoList = regService.StandardInfoSearch(value, page);
+        if (esStandardInfoList.isEmpty()){
+            titleInfo = newsPaperSearch(type, value, page);
+        }else{
+            for (EsStandardBean esStandardInfo1 : esStandardInfoList){
+                title = esStandardInfo1.getTitle();
+                break;
+            }
+            if (title.contains(value)){
+                titleInfo = newsPaperSearch(type, value, page);
+            }else{
+                titleInfo = newsPaperSearch(type, title, page);
+            }
+        }
+        return titleInfo;
+    }
+
     /**
      * @Description 搜索框
      * @function 新闻公告文章详情页
@@ -95,22 +119,6 @@ public class NewsService {
                 absPictureUrl.add(pic_map);
             }
 
-//            // picURL需要判断
-//            List<String> absPicURList = (List<String>) sourceAsMap.get("absPicURL"); //
-//            String absPicURL = null;
-//            if ((absPicURList == null)){
-//                System.out.println("pic is null");
-//            }else{
-//                for (String pic : absPicURList) {
-//                    if ((pic.endsWith(".jpg") == true) && (pic.split("/")[2].equals(uuid))) {
-//                        absPicURL = pic;
-//                        break;
-//                    } else {
-//                        continue;
-//                    }
-//                }
-//            }
-//            esIndustryBean.setPictureUrl(absPicURL); //测试完删除
 
             esIndustryBean.setContent(content);
             esIndustryBean.setHtml(html);
